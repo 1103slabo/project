@@ -102,6 +102,48 @@ pandoc --defaults files.yml
 | 19 | count_occurrences | 出現回数の集計 |
 | 20 | matrix_transpose | 行列の転置 |
 
+## variants の辞書構造（複数プレースホルダー対応）
+
+`build.py` 内の `variants` 辞書は「variant名 → {プレースホルダー名: ファイルパス}」という構造になっています。
+
+```python
+variants = {
+    "variant_a": {
+        "CODE":  "snippets/q1_pattern_a.pseudo",
+        "IMAGE": "images/q1_a_diagram.png",
+        "TABLE": "tables/q1_a_trace.md",
+    },
+    "variant_b": {
+        "CODE":  "snippets/q1_pattern_b.pseudo",
+        "IMAGE": "images/q1_b_diagram.png",
+        "TABLE": "tables/q1_b_trace.md",
+    },
+}
+```
+
+キー名（`CODE`, `IMAGE`, `TABLE` など）は `template.md` 内の `{{CODE}}`, `{{IMAGE}}`, `{{TABLE}}` と対応します。
+
+### プレースホルダー種別ごとの処理
+
+| プレースホルダー | 処理内容 |
+|---|---|
+| `CODE` | ファイル内容をそのまま差し込む（コードブロック内で使用） |
+| `IMAGE` | `![図](パス)` というMarkdown画像記法に変換して差し込む |
+| `TABLE` | ファイル内容をそのまま差し込む（Markdown表形式のファイルを想定） |
+| その他 | ファイル内容をそのまま差し込む（デフォルト動作） |
+
+### 新しいプレースホルダー種別を追加する手順
+
+1. `template.md` に `{{新しいキー名}}` を追加する
+2. 必要であれば `build.py` の `resolve_value()` 関数に変換処理を追加する
+   （画像のように特殊な変換が必要な場合のみ。テキストそのまま差し込みなら不要）
+3. `variants` 辞書の各エントリに新しいキーと対応ファイルパスを追加する
+
+### images/ フォルダについて
+
+`images/` フォルダ内の `.png` ファイルはサンプルとしてダミーファイルが配置されています。
+実際の画像に差し替えて使用してください。
+
 ## 前提条件
 
 - Python 3.x
