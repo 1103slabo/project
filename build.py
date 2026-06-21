@@ -9,11 +9,18 @@ from pathlib import Path
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-FOLDER_TO_PLACEHOLDER = {
-    "snippets": "CODE",
-    "images": "IMAGE",
-    "tables": "TABLE",
-}
+def load_folder_mapping(config_path: str = "folder_mapping.json") -> dict:
+    path = Path(config_path)
+    if not path.exists():
+        print(f"✗ 設定ファイルが見つかりません: {config_path}")
+        raise SystemExit(1)
+    try:
+        with path.open(encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"✗ 設定ファイルの形式が正しくありません: {config_path}")
+        print(f"  詳細: {e}")
+        raise SystemExit(1)
 
 
 def parse_args():
@@ -23,6 +30,11 @@ def parse_args():
     parser.add_argument(
         "template",
         help="使用するテンプレートMDファイルのパス（例: templates/template_a.md）"
+    )
+    parser.add_argument(
+        "--mapping",
+        default="folder_mapping.json",
+        help="フォルダ⇔プレースホルダー対応設定ファイルのパス（デフォルト: folder_mapping.json）"
     )
     return parser.parse_args()
 
@@ -70,6 +82,7 @@ def resolve_value(key: str, filepath: str) -> str:
 
 
 args = parse_args()
+FOLDER_TO_PLACEHOLDER = load_folder_mapping(args.mapping)
 template_path = Path(args.template)
 
 if not template_path.exists():

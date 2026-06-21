@@ -9,26 +9,26 @@
 
 ```
 project/
-├── build.py          # ビルドスクリプト
-├── template.md       # Markdown出力テンプレート（{{TITLE}}・{{CODE}} プレースホルダー）
-├── titles.json       # スニペットファイル名 → 日本語タイトルの対応表
+├── build.py              # ビルドスクリプト
+├── template.md           # Markdown出力テンプレート（問題用）
+├── template-answer.md    # Markdown出力テンプレート（解答用）
+├── titles.json           # 識別子 → 日本語タイトルの対応表
 │
-├── snippets/         # 差し込みコンテンツ（build.py の入力）
-│   ├── 01_sample_a.pseudo
-│   ├── 02_sample_b.pseudo
-│   └── ...
+├── snippets/             # コード差し込みコンテンツ（{{CODE}} に対応）
+│   └── q1_a.pseudo
 │
-├── output/           # build.py が生成する Markdown + Pandocで作るPDF
-│   ├── 01_sample_a.md … （生成されたMarkdown）
-│   ├── output_000.md （表紙・メタデータ）
-│   ├── files.yml     （Pandoc用ファイルリスト → output.pdf）
-│   └── output.pdf
+├── images/               # 画像差し込みコンテンツ（{{IMAGE}} に対応）
+│   ├── q1_a_1.png
+│   └── q1_a_2.png
 │
-└── question/         # サブプロジェクト用Markdown + Pandocで作るPDF
-    ├── 01_sample.md … （生成されたMarkdown）
-    ├── output_000.md （表紙・メタデータ）
-    ├── files.yml     （Pandoc用ファイルリスト → document.pdf）
-    └── document.pdf
+├── tables/               # 表差し込みコンテンツ（{{TABLE}} に対応）
+│   └── q1_a.md
+│
+├── output/               # build.py が生成する Markdown（Pandoc でPDF化）
+│   └── q1_a.md
+│
+└── Instructions/         # このシステムの構築・変更指示書（参考資料）
+
 ```
 
 ## 使い方
@@ -59,8 +59,6 @@ pandoc --defaults files.yml
 ```
 
 `files.yml` に列挙された Markdown ファイルをまとめてPDFとして出力します。
-
-別フォルダのPDFを生成する場合は `question/` フォルダで同様に実行してください。
 
 ```bash
 cd question
@@ -103,7 +101,17 @@ images/q1a_2.png
 
 番号を付けない場合（1つだけの場合）は、従来通り番号なしのファイル名・プレースホルダーで構いません。
 
-## フォルダとプレースホルダーの対応
+## フォルダとプレースホルダーの対応設定
+
+`folder_mapping.json` で、どのフォルダがどのプレースホルダーに対応するかを管理しています。
+
+```json
+{
+    "snippets": "CODE",
+    "images": "IMAGE",
+    "tables": "TABLE"
+}
+```
 
 | フォルダ | プレースホルダー | 処理内容 |
 |---|---|---|
@@ -111,7 +119,22 @@ images/q1a_2.png
 | `images/` | `{{IMAGE}}` | `![図](パス)` というMarkdown画像記法に変換して差し込む |
 | `tables/` | `{{TABLE}}` | ファイル内容をそのまま差し込む（Markdown表形式のファイルを想定） |
 
-新しいフォルダ種別を追加する場合は、`build.py` の `FOLDER_TO_PLACEHOLDER` 辞書にエントリを追加するだけで対応できます。
+新しい種類のファイル（例: 音声、グラフ等）を追加したい場合は、対応するフォルダを作成し、`folder_mapping.json` にエントリを追加するだけで使えるようになります。`build.py` を編集する必要はありません。
+
+```json
+{
+    "snippets": "CODE",
+    "images": "IMAGE",
+    "tables": "TABLE",
+    "graphs": "GRAPH"
+}
+```
+
+設定ファイルのパスを変更したい場合は、`--mapping` オプションで指定できます。
+
+```bash
+python build.py template.md --mapping mapping_kanji.json
+```
 
 ### images/ フォルダについて
 
