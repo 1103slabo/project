@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+.venv/
+venv/
+env/
+
+# Build output
+output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+tables/
+snippets/
+images/
