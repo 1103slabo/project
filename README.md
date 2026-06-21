@@ -36,10 +36,18 @@ project/
 ### 1. Markdownを生成する
 
 ```bash
-python build.py
+python build.py <テンプレートファイルのパス>
 ```
 
-`snippets/` にあるファイルを1つずつ読み込み、`template.md` のプレースホルダー（`{{TITLE}}` や `{{CODE}}` など）を置換して `output/` に Markdown ファイルを書き出します。
+例:
+```bash
+python build.py template.md
+python build.py templates/template_b.md
+```
+
+指定したテンプレートMDファイルのプレースホルダー（`{{TITLE}}` や `{{CODE}}` など）を置換して `output/` に Markdown ファイルを書き出します。
+
+新しいテンプレートを追加する場合は、テンプレートファイルを作成し、実行時にそのパスを引数として指定するだけで利用できます。
 
 ### 2. PDFに変換する
 
@@ -59,57 +67,51 @@ cd question
 pandoc --defaults files.yml
 ```
 
-## スニペットを追加する手順
+## variantの追加方法
 
-1. `snippets/` に新しいファイルを追加する（例: `06_sample_c.pseudo`）
-2. `titles.json` に対応するタイトルを追加する
+1. `snippets/`, `images/`, `tables/` のいずれかのフォルダに、
+   同じ識別子（ファイル名）を持つファイルを配置する
 
-```json
-{
-  "sample_c": "サンプルコードC"
-}
+   例：
+   - `snippets/q2a.pseudo`
+   - `images/q2a.png`
+   - `tables/q2a.md`
+
+   ファイル名（拡張子を除いた部分）が識別子になります。プレフィックスは不要です。
+
+2. `python build.py <テンプレートファイル>` を実行すると、
+   識別子が自動的に検出され、`output/q2a.md` が生成される
+
+3. 画像やテーブルが用意できていないvariantがあっても処理は止まらず、
+   コンソールに警告が表示されるだけで先に進む
+
+## 同じ種類のプレースホルダーを複数使いたい場合
+
+テンプレート側で番号付きのプレースホルダーを使用してください。
+
+```markdown
+{{IMAGE_1}}
+{{IMAGE_2}}
 ```
 
-3. `python build.py` を実行して `output/` の Markdown を更新する
-4. `output/files.yml` の `input-files` リストに `06_sample_c.md` を追加する
-5. `pandoc --defaults output/files.yml` で PDF を再生成する
+対応するファイルも、同じ識別子＋番号の形式で配置します。
 
-## variants の辞書構造（複数プレースホルダー対応）
-
-`build.py` 内の `variants` 辞書は「variant名 → {プレースホルダー名: ファイルパス}」という構造になっています。
-
-```python
-variants = {
-    "variant_a": {
-        "CODE":  "snippets/q1_pattern_a.pseudo",
-        "IMAGE": "images/q1_a_diagram.png",
-        "TABLE": "tables/q1_a_trace.md",
-    },
-    "variant_b": {
-        "CODE":  "snippets/q1_pattern_b.pseudo",
-        "IMAGE": "images/q1_b_diagram.png",
-        "TABLE": "tables/q1_b_trace.md",
-    },
-}
+```
+images/q1a_1.png
+images/q1a_2.png
 ```
 
-キー名（`CODE`, `IMAGE`, `TABLE` など）は `template.md` 内の `{{CODE}}`, `{{IMAGE}}`, `{{TABLE}}` と対応します。
+番号を付けない場合（1つだけの場合）は、従来通り番号なしのファイル名・プレースホルダーで構いません。
 
-### プレースホルダー種別ごとの処理
+## フォルダとプレースホルダーの対応
 
-| プレースホルダー | 処理内容 |
-|---|---|
-| `CODE` | ファイル内容をそのまま差し込む（コードブロック内で使用） |
-| `IMAGE` | `![図](パス)` というMarkdown画像記法に変換して差し込む |
-| `TABLE` | ファイル内容をそのまま差し込む（Markdown表形式のファイルを想定） |
-| その他 | ファイル内容をそのまま差し込む（デフォルト動作） |
+| フォルダ | プレースホルダー | 処理内容 |
+|---|---|---|
+| `snippets/` | `{{CODE}}` | ファイル内容をそのまま差し込む |
+| `images/` | `{{IMAGE}}` | `![図](パス)` というMarkdown画像記法に変換して差し込む |
+| `tables/` | `{{TABLE}}` | ファイル内容をそのまま差し込む（Markdown表形式のファイルを想定） |
 
-### 新しいプレースホルダー種別を追加する手順
-
-1. `template.md` に `{{新しいキー名}}` を追加する
-2. 必要であれば `build.py` の `resolve_value()` 関数に変換処理を追加する
-   （画像のように特殊な変換が必要な場合のみ。テキストそのまま差し込みなら不要）
-3. `variants` 辞書の各エントリに新しいキーと対応ファイルパスを追加する
+新しいフォルダ種別を追加する場合は、`build.py` の `FOLDER_TO_PLACEHOLDER` 辞書にエントリを追加するだけで対応できます。
 
 ### images/ フォルダについて
 
